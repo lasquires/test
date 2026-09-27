@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OncoFlow — Regimen Selection & Administration Prototype</title>
+<style>
+  :root{
+    --bg:#f4f7f9;--panel:#fff;--ink:#17212b;--muted:#667684;--line:#dce4e9;--accent:#205f8f;--accent2:#e8f3fb;
+    --ok:#226b45;--okbg:#eaf6ef;--warn:#8a5a00;--warnbg:#fff5dc;--bad:#9a2d33;--badbg:#fff0f0;--violet:#6651a8;--shadow:0 6px 24px rgba(23,33,43,.08);
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+  button,input,select{font:inherit}
+  button{cursor:pointer}
+  .app{min-height:100vh;display:grid;grid-template-columns:248px 1fr}
+  aside{background:#102c3f;color:white;padding:22px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+  .brand{display:flex;gap:10px;align-items:center;font-weight:800;font-size:20px;margin:2px 8px 24px}.logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#6cc0e5,#fff);display:grid;place-items:center;color:#12374e;font-weight:900}
+  .demo{font-size:11px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);padding:8px 10px;border-radius:9px;margin:0 6px 18px;line-height:1.35;color:#dbeaf2}
+  nav button{width:100%;border:0;background:transparent;color:#d3e5ef;text-align:left;padding:11px 12px;border-radius:10px;margin:4px 0;font-weight:650;display:flex;gap:10px;align-items:center}
+  nav button.active,nav button:hover{background:#1c435c;color:white}
+  nav .ico{width:22px;text-align:center;opacity:.9}
+  .side-foot{position:absolute;bottom:18px;left:18px;right:18px;color:#aac2d0;font-size:12px;line-height:1.4}
+  main{min-width:0}
+  .topbar{height:70px;background:rgba(255,255,255,.94);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 26px;position:sticky;top:0;z-index:10;backdrop-filter:blur(8px)}
+  .crumb{font-size:13px;color:var(--muted)} .crumb b{color:var(--ink)}
+  .user{display:flex;gap:11px;align-items:center}.avatar{width:34px;height:34px;border-radius:50%;background:#d8ebf7;display:grid;place-items:center;font-weight:800;color:#235576}.user small{color:var(--muted);display:block}
+  .content{padding:24px 28px 56px;max-width:1600px;margin:auto}
+  .patientbar{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;grid-template-columns:1.25fr repeat(5,minmax(120px,1fr));gap:12px;align-items:center;box-shadow:0 2px 10px rgba(23,33,43,.04);margin-bottom:18px}
+  .patient strong{display:block;font-size:15px}.patient span,.kv span{font-size:12px;color:var(--muted)}.kv b{display:block;font-size:13px;margin-top:2px}.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:750}.ok{color:var(--ok);background:var(--okbg)}.warn{color:var(--warn);background:var(--warnbg)}.bad{color:var(--bad);background:var(--badbg)}.neutral{background:#edf2f5;color:#526674}
+  .pagehead{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin:10px 2px 18px}.pagehead h1{font-size:26px;margin:0 0 5px}.pagehead p{margin:0;color:var(--muted);font-size:14px;max-width:760px}.primary{border:0;background:var(--accent);color:white;border-radius:10px;padding:10px 14px;font-weight:750}.secondary{border:1px solid var(--line);background:white;color:var(--ink);border-radius:10px;padding:9px 13px;font-weight:700}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}.search{flex:1;min-width:280px;position:relative}.search input{width:100%;border:1px solid var(--line);border-radius:11px;padding:11px 12px 11px 38px;background:white;outline:none}.search:before{content:'⌕';position:absolute;left:13px;top:8px;font-size:21px;color:#7b8d9a}.toolbar select{border:1px solid var(--line);border-radius:11px;background:white;padding:10px 34px 10px 11px;color:#43525d}
+  .layout{display:grid;grid-template-columns:minmax(430px,.95fr) minmax(560px,1.35fr);gap:18px;align-items:start}.card{background:white;border:1px solid var(--line);border-radius:var(--r);box-shadow:0 2px 12px rgba(23,33,43,.04)}
+  .listhead{padding:14px 15px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.listhead b{font-size:13px}.small{font-size:12px;color:var(--muted)}
+  .reglist{max-height:690px;overflow:auto}.reg{padding:14px 15px;border-bottom:1px solid #edf1f3;cursor:pointer;transition:.15s}.reg:hover{background:#f8fbfd}.reg.sel{background:#edf7fc;border-left:4px solid var(--accent);padding-left:11px}.regtop{display:flex;justify-content:space-between;gap:10px}.regname{font-weight:790;font-size:14px}.site{font-size:11px;color:var(--muted);margin-top:3px}.regmeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.pill{padding:4px 7px;background:#f0f4f6;border-radius:999px;font-size:10px;color:#52616c;font-weight:700}.source{font-size:10px;color:#71838f;margin-top:8px}
+  .detail{overflow:hidden}.detailhero{padding:18px 19px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#f9fcfd)}.detailhero h2{font-size:21px;margin:0 0 3px}.detailhero .sub{color:var(--muted);font-size:13px}.detailhero .row{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.banner{margin-top:13px;background:#f4f8fb;border:1px solid #d5e7f1;border-radius:10px;padding:10px 11px;font-size:12px;color:#496171;display:flex;justify-content:space-between;gap:12px}.detailbody{padding:17px 19px 20px}.sectiontitle{display:flex;justify-content:space-between;align-items:end;margin:0 0 9px}.sectiontitle h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;margin:0;color:#5c6b75}.sectiontitle span{font-size:11px;color:var(--muted)}
+  .timeline{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:17px}.day{min-height:72px;border:1px solid var(--line);border-radius:9px;padding:7px;background:#fafcfd}.day.active{border-color:#8ab8d5;background:#eef8fd}.day b{font-size:11px}.day div{font-size:10px;color:#50606b;margin-top:5px;line-height:1.25}.day .more{color:var(--accent);font-weight:700}
+  table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;border:1px solid var(--line);border-radius:10px;overflow:hidden}th{background:#f5f8fa;color:#5d6a74;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:9px 9px;border-bottom:1px solid var(--line)}td{padding:10px 9px;border-bottom:1px solid #edf1f3;vertical-align:top}tr:last-child td{border-bottom:0}.route{color:#5b6c78}.dose{font-weight:750}.autoTag{font-size:9px;padding:3px 5px;border-radius:5px;background:#ecf5fa;color:#2a6488;font-weight:800}
+  .actionbar{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:12px}.actionbar .hint{font-size:11px;color:var(--muted);max-width:420px}
+  .hidden{display:none!important}
+  .planGrid{display:grid;grid-template-columns:1.12fr .88fr;gap:18px}.stack{display:flex;flex-direction:column;gap:16px}.pane{padding:17px 18px}.pane h3{margin:0 0 4px;font-size:16px}.pane p{margin:0 0 13px;color:var(--muted);font-size:12px}.fieldgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field label{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#687883;font-weight:800;display:block;margin-bottom:5px}.field .value{border:1px solid var(--line);background:#f9fbfc;border-radius:9px;padding:9px 10px;font-size:12px;min-height:37px}.autoline{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #eef2f4}.autoline:last-child{border-bottom:0}.autoline b{font-size:12px}.autoline span{font-size:11px;color:var(--muted)}.switch{width:36px;height:20px;background:#d7e0e5;border-radius:20px;position:relative}.switch:after{content:'';width:14px;height:14px;border-radius:50%;background:white;position:absolute;left:3px;top:3px;box-shadow:0 1px 3px #8a9aa5}.switch.on{background:#3c8b67}.switch.on:after{left:19px}
+  .modrow{display:grid;grid-template-columns:1.15fr .65fr .85fr .85fr;gap:7px;align-items:center;padding:9px 0;border-bottom:1px solid #eef2f4;font-size:12px}.modrow:last-child{border:0}.modrow select,.modrow input{width:100%;border:1px solid var(--line);border-radius:8px;padding:7px;background:white}.delta{background:#fffaf0;border:1px solid #f0ddb2;border-radius:10px;padding:11px 12px;font-size:12px;line-height:1.4}.delta b{color:#815600}
+  .nurseGrid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(340px,.7fr);gap:18px}.checkcard{padding:16px 18px}.checkrows{display:grid;grid-template-columns:1fr 1fr;gap:8px}.check{border:1px solid var(--line);border-radius:10px;padding:10px 11px;display:flex;justify-content:space-between;gap:10px;align-items:center}.check b{font-size:12px}.check small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.dot{width:9px;height:9px;border-radius:50%;background:#2f8759;box-shadow:0 0 0 3px #e8f6ee}.manual .dot{background:#d99a28;box-shadow:0 0 0 3px #fff2d3}
+  .medcard{padding:0;overflow:hidden}.medhdr{padding:14px 16px;background:#f6f9fb;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.medhdr b{font-size:13px}.med{padding:13px 16px;border-bottom:1px solid #edf1f3;display:grid;grid-template-columns:1.25fr .6fr .65fr .7fr;gap:10px;align-items:center}.med:last-child{border:0}.med .name{font-weight:800;font-size:13px}.med .meta{font-size:10px;color:var(--muted);margin-top:2px}.med .val{font-size:11px}.start{border:1px solid #9cc4dc;background:#f2f9fd;color:#225f86;padding:7px 9px;border-radius:8px;font-weight:750;font-size:11px}.start.running{background:#fff6df;border-color:#e7c971;color:#7a570a}.start.done{background:#edf7f1;border-color:#b5d8c3;color:#286746}.tasks{padding:16px 18px}.task{padding:10px 0;border-bottom:1px solid #edf1f3;display:flex;gap:9px}.task:last-child{border:0}.box{width:18px;height:18px;border:1px solid #b8c5cd;border-radius:5px;display:grid;place-items:center;font-size:11px;color:white;flex:0 0 auto}.task.done .box{background:#347f5a;border-color:#347f5a}.task b{font-size:12px}.task small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.exception{border:1px solid #efd1d4;background:#fff7f7;border-radius:10px;padding:11px 12px;margin-top:12px}.exception b{font-size:12px;color:#893039}.exception p{font-size:10px;color:#80565b;margin:3px 0 0}.footerNote{margin-top:22px;color:#6f7d86;font-size:11px;line-height:1.45}
+  .count{font-size:11px;background:#eef3f6;border-radius:99px;padding:4px 8px;color:#5f6f7a}
+  @media(max-width:1050px){.app{grid-template-columns:80px 1fr}.brand span,nav button span,.demo,.side-foot{display:none}aside{padding:18px 10px}.brand{justify-content:center;margin-left:0;margin-right:0}nav button{justify-content:center}.patientbar{grid-template-columns:1fr 1fr 1fr}.layout,.planGrid,.nurseGrid{grid-template-columns:1fr}.reglist{max-height:420px}}
+  @media(max-width:720px){.app{display:block}aside{height:auto;position:static;display:flex;align-items:center;padding:8px 10px}.brand{margin:0 8px 0 0}.logo{width:30px;height:30px}nav{display:flex;overflow:auto}nav button{width:auto;white-space:nowrap;margin:0 2px;padding:8px 10px}nav button span{display:inline}.topbar{position:static;padding:0 14px}.content{padding:16px 12px 40px}.patientbar{grid-template-columns:1fr 1fr}.layout{display:block}.reglist{max-height:360px}.detail{margin-top:12px}.fieldgrid{grid-template-columns:1fr}.timeline{grid-template-columns:repeat(4,1fr)}.med{grid-template-columns:1fr 1fr}.checkrows{grid-template-columns:1fr}.pagehead{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand"><div class="logo">O+</div><span>OncoFlow</span></div>
+    <div class="demo">DESIGN PROTOTYPE<br>All patients are synthetic. Regimen content is illustrative and must be replaced by institutionally validated, version-controlled protocols before clinical use.</div>
+    <nav>
+      <button class="active" data-view="library"><span class="ico">⌕</span><span>Regimen library</span></button>
+      <button data-view="plan"><span class="ico">▦</span><span>Build treatment plan</span></button>
+      <button data-view="nurse"><span class="ico">✓</span><span>Nurse: today</span></button>
+      <button><span class="ico">↺</span><span>Plan history</span></button>
+      <button><span class="ico">⚙</span><span>Protocol governance</span></button>
+    </nav>
+    <div class="side-foot">Design principle: <b>document exceptions, not defaults.</b><br>Standard details come from the validated regimen template.</div>
+  </aside>
+  <main>
+    <div class="topbar">
+      <div class="crumb">Systemic Therapy / <b id="crumb">Regimen library</b></div>
+      <div class="user"><div><b style="font-size:12px">Alex Morgan, RN</b><small>Infusion Center</small></div><div class="avatar">AM</div></div>
+    </div>
+    <div class="content">
+      <div class="patientbar">
+        <div class="patient"><span>SYNTHETIC PATIENT</span><strong>Jordan Lee · Demo 0001</strong><span>Colon adenocarcinoma · Stage III · Adjuvant</span></div>
+        <div class="kv"><span>Cycle / Day</span><b>C3 · D1</b></div>
+        <div class="kv"><span>Weight</span><b>74.2 kg <span class="chip ok">current</span></b></div>
+        <div class="kv"><span>BSA</span><b>1.86 m² <span class="chip neutral">auto</span></b></div>
+        <div class="kv"><span>Allergies</span><b>NKDA <span class="chip ok">reviewed</span></b></div>
+        <div class="kv"><span>Today's readiness</span><b><span class="chip ok">6 auto-cleared</span> <span class="chip warn">2 verify</span></b></div>
+      </div>
+
+      <section id="libraryView">
+        <div class="pagehead"><div><h1>Choose a regimen</h1><p>Search a curated, diagnosis-aware library. The template brings the schedule, drugs, routes, supportive care, monitoring rules, and administration sequence — staff only enter patient-specific differences.</p></div><button class="secondary">View all protocol versions</button></div>
+        <div class="toolbar">
+          <div class="search"><input id="search" placeholder="Search regimen, drug, tumor site…" /></div>
+          <select id="siteFilter"><option value="all">All tumor sites</option></select>
+          <select id="intentFilter"><option value="all">All intents</option><option>Adjuvant</option><option>Neoadjuvant</option><option>Metastatic</option><option>Definitive</option><option>Induction</option></select>
+        </div>
+        <div class="layout">
+          <div class="card"><div class="listhead"><b>Validated regimen templates</b><span id="resultCount" class="count"></span></div><div id="regList" class="reglist"></div></div>
+          <div id="detail" class="card detail"></div>
+        </div>
+      </section>
+
+      <section id="planView" class="hidden">
+        <div class="pagehead"><div><h1>Build patient treatment plan</h1><p>Most information is inherited from the patient chart and selected protocol. The prescriber touches only the clinical decisions; nothing is retyped just because a new cycle starts.</p></div><button class="primary">Review & sign plan</button></div>
+        <div class="planGrid">
+          <div class="stack">
+            <div class="card pane">
+              <h3>1 · Treatment context</h3><p>Chart-derived facts are visible but not re-entered.</p>
+              <div class="fieldgrid">
+                <div class="field"><label>Diagnosis</label><div class="value">Colon adenocarcinoma <span class="autoTag">FROM CHART</span></div></div>
+                <div class="field"><label>Stage / intent</label><div class="value">Stage III · Adjuvant <span class="autoTag">FROM CHART</span></div></div>
+                <div class="field"><label>Selected regimen</label><div class="value"><b>mFOLFOX6</b> · q14 days · 12 cycles</div></div>
+                <div class="field"><label>Start</label><div class="value">Cycle 3 · Day 1 · Today</div></div>
+              </div>
+            </div>
+            <div class="card pane">
+              <h3>2 · Patient-specific variables</h3><p>Live values are pulled once and stamped with source/time. Clinicians change the source only when there is a reason.</p>
+              <div class="autoline"><div><b>Height 172 cm · Weight 74.2 kg · BSA 1.86 m²</b><span>Vitals · today 08:11 · BSA automatically calculated</span></div><span class="chip ok">current</span></div>
+              <div class="autoline"><div><b>Creatinine 0.84 mg/dL · eGFR &gt;90</b><span>Lab interface · today 06:42</span></div><span class="chip ok">current</span></div>
+              <div class="autoline"><div><b>ANC 2.6 · Platelets 184</b><span>Lab interface · today 06:42</span></div><span class="chip ok">within template</span></div>
+              <div class="autoline"><div><b>Allergy review</b><span>NKDA · last reviewed today 08:09</span></div><div class="switch on"></div></div>
+            </div>
+            <div class="card pane">
+              <h3>3 · Regimen modifications</h3><p>The standard regimen is locked. Enter only the delta and its scope; the system carries it forward exactly as instructed.</p>
+              <div class="modrow" style="font-size:10px;text-transform:uppercase;color:#6d7d88;font-weight:800"><div>Agent</div><div>% standard</div><div>Scope</div><div>Reason</div></div>
+              <div class="modrow"><div><b>Oxaliplatin</b><br><span class="small">85 mg/m² standard</span></div><select><option>100%</option><option>75%</option><option>50%</option><option>Custom…</option></select><select><option>All future cycles</option><option>This cycle only</option><option>This dose only</option></select><select><option>No modification</option><option>Neuropathy</option><option>Renal function</option><option>Other…</option></select></div>
+              <div class="modrow"><div><b>Fluorouracil CIV</b><br><span class="small">2,400 mg/m² / 46 h</span></div><select><option>100%</option><option>75%</option><option>50%</option><option>Custom…</option></select><select><option>All future cycles</option><option>This cycle only</option><option>This dose only</option></select><select><option>No modification</option><option>Mucositis</option><option>Hand-foot syndrome</option><option>Other…</option></select></div>
+              <div class="delta"><b>No differences from validated template.</b> If something changes, the review screen will show a concise before → after diff instead of making staff re-review every unchanged field.</div>
+            </div>
+          </div>
+          <div class="stack">
+            <div class="card pane">
+              <h3>What the template supplies</h3><p>This information is version-controlled and should not be manually re-entered for every patient.</p>
+              <div class="autoline"><div><b>Drug names, doses & calculation method</b><span>Including BSA/AUC/flat-dose logic</span></div><span class="chip neutral">locked</span></div>
+              <div class="autoline"><div><b>Route, diluent, volume & infusion time</b><span>Pharmacy/administration defaults</span></div><span class="chip neutral">locked</span></div>
+              <div class="autoline"><div><b>Premeds & supportive medications</b><span>Including day-specific take-home meds</span></div><span class="chip neutral">locked</span></div>
+              <div class="autoline"><div><b>Required labs / monitoring</b><span>Each rule has its own freshness window</span></div><span class="chip neutral">locked</span></div>
+              <div class="autoline"><div><b>Administration order & special precautions</b><span>Visible at bedside when relevant</span></div><span class="chip neutral">locked</span></div>
+            </div>
+            <div class="card pane">
+              <h3>Safe carry-forward</h3><p>Instead of ARIA-style edits that can fail to propagate to pending prescriptions, every change has an explicit scope.</p>
+              <div class="autoline"><div><b>This dose only</b><span>One-time exception; future treatment returns to plan</span></div><span class="chip neutral">scope</span></div>
+              <div class="autoline"><div><b>This cycle</b><span>Applies to remaining planned doses in current cycle</span></div><span class="chip neutral">scope</span></div>
+              <div class="autoline"><div><b>All future cycles</b><span>Persists until explicitly restored or changed</span></div><span class="chip neutral">scope</span></div>
+              <div class="autoline"><div><b>Plan-level change</b><span>Creates a new version with auditable rationale</span></div><span class="chip warn">requires sign</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="nurseView" class="hidden">
+        <div class="pagehead"><div><h1>Today · Cycle 3, Day 1</h1><p>Everything already known is prefilled. The nurse sees the few things that still require human verification, then administers from a single sequence.</p></div><button class="secondary">Open full chart</button></div>
+        <div class="nurseGrid">
+          <div class="stack">
+            <div class="card checkcard"><div class="sectiontitle"><h3>Pre-treatment readiness</h3><span>6 auto · 2 human checks</span></div>
+              <div class="checkrows">
+                <div class="check"><div><b>Identity & active order</b><small>2 identifiers matched to wristband</small></div><div class="dot"></div></div>
+                <div class="check"><div><b>Consent on file</b><small>Current regimen consent · 2026-08-11</small></div><div class="dot"></div></div>
+                <div class="check"><div><b>Labs meet plan parameters</b><small>ANC, platelets, renal panel · 06:42</small></div><div class="dot"></div></div>
+                <div class="check"><div><b>Weight / BSA current</b><small>74.2 kg · change &lt;5% · 08:11</small></div><div class="dot"></div></div>
+                <div class="check"><div><b>Allergy / reaction history</b><small>No known drug allergies · no prior infusion reaction</small></div><div class="dot"></div></div>
+                <div class="check"><div><b>Pharmacy verification</b><small>Released · all 4 treatment agents matched</small></div><div class="dot"></div></div>
+                <div class="check manual"><div><b>Symptoms / toxicity reviewed</b><small>Tap only if something changed since last visit</small></div><div class="dot"></div></div>
+                <div class="check manual"><div><b>Line patency / blood return</b><small>Human bedside verification required</small></div><div class="dot"></div></div>
+              </div>
+            </div>
+            <div class="card medcard">
+              <div class="medhdr"><b>Administration sequence</b><span class="small">Scan → verify → start. Stop time is captured from the same row.</span></div>
+              <div class="med"><div><div class="name">Oxaliplatin</div><div class="meta">IV infusion · template 85 mg/m² · 2 h</div></div><div class="val">Dose<br><b>template-derived</b></div><div class="val">Status<br><span class="chip neutral">ready</span></div><button class="start" onclick="toggleMed(this)">Scan & start</button></div>
+              <div class="med"><div><div class="name">Leucovorin</div><div class="meta">IV · regimen template · Day 1</div></div><div class="val">Dose<br><b>template-derived</b></div><div class="val">Status<br><span class="chip neutral">ready</span></div><button class="start" onclick="toggleMed(this)">Scan & start</button></div>
+              <div class="med"><div><div class="name">Fluorouracil · bolus</div><div class="meta">IV · Day 1</div></div><div class="val">Dose<br><b>template-derived</b></div><div class="val">Status<br><span class="chip neutral">ready</span></div><button class="start" onclick="toggleMed(this)">Scan & start</button></div>
+              <div class="med"><div><div class="name">Fluorouracil · continuous</div><div class="meta">Ambulatory pump · 46 h</div></div><div class="val">Dose<br><b>template-derived</b></div><div class="val">Status<br><span class="chip neutral">ready</span></div><button class="start" onclick="toggleMed(this)">Scan & start</button></div>
+            </div>
+          </div>
+          <div class="stack">
+            <div class="card tasks"><div class="sectiontitle"><h3>Human input still needed</h3><span>3 items</span></div>
+              <div class="task"><div class="box"></div><div><b>Symptoms / toxicity changes?</b><small>If none, tap “No change.” Do not re-enter a full symptom form.</small></div></div>
+              <div class="task"><div class="box"></div><div><b>Confirm access & blood return</b><small>Port · right chest · only the bedside result is entered.</small></div></div>
+              <div class="task"><div class="box"></div><div><b>End-of-visit clinical status</b><small>Stable / changed / reaction. Notes appear only when changed.</small></div></div>
+              <button class="primary" style="width:100%;margin-top:12px">Confirm no other changes</button>
+            </div>
+            <div class="card pane"><h3>Independent verification</h3><p>Safety checks stay; duplicate typing goes away.</p>
+              <div class="autoline"><div><b>Prescriber verification</b><span>Signed plan v3.2</span></div><span class="chip ok">complete</span></div>
+              <div class="autoline"><div><b>Pharmacy verification</b><span>Prepared products matched to order</span></div><span class="chip ok">complete</span></div>
+              <div class="autoline"><div><b>Bedside verification</b><span>Patient + drug + dose + route + time</span></div><span class="chip warn">at scan</span></div>
+              <div class="autoline"><div><b>Co-sign</b><span>Triggered only where policy requires it</span></div><span class="chip neutral">contextual</span></div>
+            </div>
+            <div class="exception"><b>Exceptions open a drawer — not a new workflow.</b><p>Delay, hold, dose change, infusion reaction, not-given, or access problem reveals only the extra fields needed for that exception and automatically creates the audit trail.</p></div>
+          </div>
+        </div>
+      </section>
+      <div class="footerNote">Prototype purpose: demonstrate an exception-driven systemic-therapy workflow. It is not an ordering system and is not a source of clinical dosing guidance. Regimen names and schedules are included to make the interaction realistic; a production system should load only institutionally approved, version-controlled protocols.</div>
+    </div>
+  </main>
+</div>
+<script>
+const regimens = [
+ {name:'mFOLFOX6',site:'Colorectal',intent:['Adjuvant','Metastatic'],freq:'14-day',cycles:'12 adjuvant / ongoing metastatic',days:'D1 + 46 h pump',drugs:['Oxaliplatin','Leucovorin','Fluorouracil bolus','Fluorouracil CIV 46 h'],source:'eviQ IDs 637 / 114',version:'Validated local template v2026.08',ref:'Oxaliplatin 85 mg/m²; fluorouracil bolus + 46 h CIV shown in reference template.'},
+ {name:'CAPOX / XELOX',site:'Colorectal',intent:['Adjuvant','Metastatic'],freq:'21-day',cycles:'protocol-dependent',days:'D1 IV + D1–14 PO',drugs:['Oxaliplatin','Capecitabine'],source:'eviQ IDs 4019 / 117',version:'Validated local template v2026.08',ref:'Oxaliplatin D1; capecitabine D1–14.'},
+ {name:'FOLFIRI (modified)',site:'Colorectal',intent:['Metastatic'],freq:'14-day',cycles:'ongoing',days:'D1 + 46 h pump',drugs:['Irinotecan','Leucovorin','Fluorouracil bolus','Fluorouracil CIV 46 h'],source:'eviQ modified FOLFIRI protocols',version:'Validated local template v2026.08'},
+ {name:'FOLFIRI + bevacizumab',site:'Colorectal',intent:['Metastatic'],freq:'14-day',cycles:'ongoing',days:'D1 + 46 h pump',drugs:['Bevacizumab','Irinotecan','Leucovorin','Fluorouracil'],source:'eviQ ID 89',version:'Validated local template v2026.08'},
+ {name:'FOLFOX + panitumumab',site:'Colorectal',intent:['Metastatic'],freq:'14-day',cycles:'ongoing',days:'D1 + 46 h pump',drugs:['Panitumumab','Oxaliplatin','Leucovorin','Fluorouracil'],source:'eviQ ID 1542',version:'Validated local template v2026.08'},
+ {name:'Modified FOLFIRINOX',site:'Pancreas',intent:['Adjuvant','Neoadjuvant','Metastatic'],freq:'14-day',cycles:'protocol-dependent',days:'D1 + 46 h pump',drugs:['Oxaliplatin','Irinotecan','Leucovorin','Fluorouracil CIV','Pegfilgrastim'],source:'eviQ IDs 3521 / 4384',version:'Validated local template v2026.08'},
+ {name:'Gemcitabine + nab-paclitaxel',site:'Pancreas',intent:['Metastatic'],freq:'28-day',cycles:'ongoing',days:'D1, 8, 15',drugs:['nab-Paclitaxel','Gemcitabine'],source:'eviQ ID 1375',version:'Validated local template v2026.08'},
+ {name:'FLOT',site:'Gastric / GEJ',intent:['Neoadjuvant','Adjuvant'],freq:'14-day',cycles:'perioperative',days:'D1 + 24 h 5-FU',drugs:['Docetaxel','Oxaliplatin','Leucovorin','Fluorouracil'],source:'Common perioperative gastric/GEJ regimen',version:'Validated local template v2026.08'},
+ {name:'TCHP',site:'Breast',intent:['Neoadjuvant'],freq:'21-day',cycles:'6',days:'D1 + growth factor',drugs:['Docetaxel','Carboplatin','Trastuzumab','Pertuzumab','Pegfilgrastim'],source:'eviQ ID 3736',version:'Validated local template v2026.08'},
+ {name:'TC',site:'Breast',intent:['Adjuvant'],freq:'21-day',cycles:'4–6',days:'D1 + D2 growth factor',drugs:['Docetaxel','Cyclophosphamide','Pegfilgrastim'],source:'eviQ ID 24',version:'Validated local template v2026.08'},
+ {name:'AC → weekly paclitaxel',site:'Breast',intent:['Adjuvant','Neoadjuvant'],freq:'21-day then weekly',cycles:'AC ×4 → paclitaxel ×12',days:'Sequential phases',drugs:['Doxorubicin','Cyclophosphamide','Paclitaxel'],source:'eviQ ID 4113',version:'Validated local template v2026.08'},
+ {name:'Dose-dense AC → weekly paclitaxel',site:'Breast',intent:['Adjuvant','Neoadjuvant'],freq:'14-day then weekly',cycles:'ddAC ×4 → paclitaxel ×12',days:'Sequential phases',drugs:['Doxorubicin','Cyclophosphamide','Pegfilgrastim','Paclitaxel'],source:'eviQ ID 4010',version:'Validated local template v2026.08'},
+ {name:'Carboplatin + paclitaxel',site:'Ovarian / Endometrial',intent:['Adjuvant','Metastatic'],freq:'21-day',cycles:'usually 6',days:'D1',drugs:['Paclitaxel','Carboplatin'],source:'eviQ ovarian/endometrial protocols',version:'Validated local template v2026.08'},
+ {name:'Carboplatin q3wk + weekly paclitaxel',site:'Ovarian',intent:['Metastatic'],freq:'21-day',cycles:'usually 6',days:'Paclitaxel D1,8,15 · carboplatin D1',drugs:['Paclitaxel','Carboplatin'],source:'eviQ ID 1016',version:'Validated local template v2026.08'},
+ {name:'Carboplatin + pemetrexed + pembrolizumab',site:'NSCLC · nonsquamous',intent:['Metastatic'],freq:'21-day',cycles:'induction then maintenance',days:'D1',drugs:['Carboplatin','Pemetrexed','Pembrolizumab'],source:'Common first-line nonsquamous NSCLC regimen',version:'Validated local template v2026.08'},
+ {name:'Carboplatin + paclitaxel + pembrolizumab',site:'NSCLC · squamous',intent:['Metastatic'],freq:'21-day',cycles:'induction then maintenance',days:'D1',drugs:['Carboplatin','Paclitaxel','Pembrolizumab'],source:'Common first-line squamous NSCLC regimen',version:'Validated local template v2026.08'},
+ {name:'Cisplatin + etoposide + thoracic RT',site:'Small-cell lung',intent:['Definitive'],freq:'21-day',cycles:'4',days:'Cisplatin D1 · etoposide D1–3',drugs:['Cisplatin','Etoposide','Concurrent radiation'],source:'eviQ ID 4594',version:'Validated local template v2026.08'},
+ {name:'Gemcitabine + cisplatin',site:'Bladder / Urothelial',intent:['Neoadjuvant','Adjuvant','Metastatic'],freq:'21-day',cycles:'protocol-dependent',days:'Gemcitabine D1,8 · cisplatin D1',drugs:['Gemcitabine','Cisplatin'],source:'eviQ ID 4036',version:'Validated local template v2026.08'},
+ {name:'BEP',site:'Testicular / Germ cell',intent:['Definitive'],freq:'21-day',cycles:'3–4',days:'Multi-day + bleomycin days',drugs:['Bleomycin','Etoposide','Cisplatin'],source:'eviQ ID 320',version:'Validated local template v2026.08'},
+ {name:'R-CHOP21',site:'B-cell lymphoma',intent:['Definitive'],freq:'21-day',cycles:'6–8',days:'D1 IV · prednisone/prednisolone D1–5',drugs:['Rituximab','Cyclophosphamide','Doxorubicin','Vincristine','Prednisone / prednisolone'],source:'eviQ ID 70',version:'Validated local template v2026.08'},
+ {name:'ABVD',site:'Hodgkin lymphoma',intent:['Definitive'],freq:'28-day',cycles:'stage-dependent',days:'D1 & D15',drugs:['Doxorubicin','Bleomycin','Vinblastine','Dacarbazine'],source:'eviQ IDs 56 / 57',version:'Validated local template v2026.08'},
+ {name:'RVd',site:'Multiple myeloma',intent:['Induction'],freq:'21/28/35-day variants',cycles:'protocol-dependent',days:'Variant-specific',drugs:['Lenalidomide','Bortezomib','Dexamethasone'],source:'eviQ RVd overview ID 3973',version:'Choose validated site variant'},
+ {name:'Azacitidine + venetoclax',site:'AML',intent:['Induction'],freq:'28-day',cycles:'response-dependent',days:'Azacitidine multi-day + oral venetoclax',drugs:['Azacitidine','Venetoclax'],source:'Widely used AML regimen; local protocol required',version:'Validated local template v2026.08'},
+ {name:'Docetaxel',site:'Prostate',intent:['Metastatic'],freq:'21-day',cycles:'protocol-dependent',days:'D1',drugs:['Docetaxel','Steroid/supportive care per protocol'],source:'Standard taxane regimen family',version:'Validated local template v2026.08'},
+ {name:'Weekly cisplatin + radiation',site:'Cervix / Head & neck',intent:['Definitive'],freq:'7-day',cycles:'during RT',days:'Weekly with radiation',drugs:['Cisplatin','Concurrent radiation'],source:'Standard chemoradiation regimen family',version:'Validated disease-specific template required'}
+];
+let selected=0;
+const siteFilter=document.getElementById('siteFilter');
+[...new Set(regimens.map(r=>r.site))].sort().forEach(s=>{let o=document.createElement('option');o.value=s;o.textContent=s;siteFilter.appendChild(o)});
+function renderList(){
+ const q=document.getElementById('search').value.toLowerCase().trim(); const sf=siteFilter.value; const inf=document.getElementById('intentFilter').value;
+ const rows=regimens.map((r,i)=>({r,i})).filter(({r})=>(!q||[r.name,r.site,...r.drugs].join(' ').toLowerCase().includes(q))&&(sf==='all'||r.site===sf)&&(inf==='all'||r.intent.includes(inf)));
+ document.getElementById('resultCount').textContent=rows.length+' regimens';
+ const el=document.getElementById('regList');el.innerHTML='';
+ rows.forEach(({r,i})=>{const d=document.createElement('div');d.className='reg'+(i===selected?' sel':'');d.onclick=()=>{selected=i;renderList();renderDetail()};d.innerHTML=`<div class="regtop"><div><div class="regname">${r.name}</div><div class="site">${r.site}</div></div><span class="chip ok">validated</span></div><div class="regmeta"><span class="pill">${r.freq}</span><span class="pill">${r.days}</span>${r.intent.slice(0,2).map(x=>`<span class="pill">${x}</span>`).join('')}</div><div class="source">${r.source}</div>`;el.appendChild(d)});
+}
+function renderDetail(){
+ const r=regimens[selected]; const detail=document.getElementById('detail');
+ const dayText=r.days.includes('D1, 8, 15')||r.days.includes('D1,8,15')?['Treatment','—','—','—','—','—','—']:['Treatment','—','—','—','—','—','—'];
+ detail.innerHTML=`<div class="detailhero"><div class="small">${r.site}</div><h2>${r.name}</h2><div class="sub">${r.drugs.join(' · ')}</div><div class="row"><span class="chip neutral">${r.freq}</span><span class="chip neutral">${r.cycles}</span>${r.intent.map(x=>`<span class="chip ok">${x}</span>`).join('')}</div><div class="banner"><span><b>${r.version}</b><br>${r.source}</span><span class="chip ok">approved template</span></div></div>
+ <div class="detailbody"><div class="sectiontitle"><h3>Cycle at a glance</h3><span>${r.days}</span></div><div class="timeline">${[1,2,3,4,5,6,7].map((d,j)=>`<div class="day ${j===0?'active':''}"><b>Day ${d}</b><div>${j===0?r.drugs.slice(0,3).join('<br>'):'—'}</div>${j===0&&r.drugs.length>3?`<div class="more">+${r.drugs.length-3} more</div>`:''}</div>`).join('')}</div>
+ <div class="sectiontitle"><h3>Template content</h3><span>No manual re-entry</span></div><table><thead><tr><th>Agent / element</th><th>Standard schedule</th><th>Route</th><th>Source</th></tr></thead><tbody>${r.drugs.map((x,j)=>`<tr><td><b>${x}</b></td><td>${j===0?r.days:'Defined by regimen template'}</td><td class="route">Template-defined</td><td><span class="autoTag">AUTO</span></td></tr>`).join('')}</tbody></table>
+ ${r.ref?`<div class="banner"><span><b>Reference example:</b> ${r.ref}</span></div>`:''}
+ <div class="actionbar"><div class="hint">Selecting a regimen copies the validated template. The next screen asks only for patient-specific variables, modifications, and start/cycle decisions.</div><button class="primary" onclick="openPlan()">Use this validated template →</button></div></div>`;
+}
+function openPlan(){switchView('plan')}
+function switchView(v){
+ document.querySelectorAll('nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+ document.getElementById('libraryView').classList.toggle('hidden',v!=='library');document.getElementById('planView').classList.toggle('hidden',v!=='plan');document.getElementById('nurseView').classList.toggle('hidden',v!=='nurse');
+ document.getElementById('crumb').textContent=v==='library'?'Regimen library':v==='plan'?'Build treatment plan':'Nurse · Today';window.scrollTo(0,0)
+}
+document.querySelectorAll('nav button[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+['search','siteFilter','intentFilter'].forEach(id=>document.getElementById(id).addEventListener(id==='search'?'input':'change',renderList));
+function toggleMed(btn){ if(btn.classList.contains('done')) return; if(btn.classList.contains('running')){btn.classList.remove('running');btn.classList.add('done');btn.textContent='Completed '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});} else {btn.classList.add('running');btn.textContent='Stop '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});} }
+renderList();renderDetail();
+</script>
+</body>
+</html>
